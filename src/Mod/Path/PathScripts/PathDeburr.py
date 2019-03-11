@@ -46,16 +46,24 @@ def translate(context, text, disambig=None):
 
 def toolDepthAndOffset(width, extraDepth, tool):
     '''toolDepthAndOffset(width, extraDepth, tool) ... return tuple for given parameters.'''
+    #   angle = 0           side 
+    #   0 < angle < 180     chamfer 
+    #   angle = 180         bottom 
+    #   180 < angle < 360   dovetail 
     angle = tool.CuttingEdgeAngle
-    if 0 == angle:
-        angle = 180
-    tan = math.tan(math.radians(angle/2))
 
-    toolDepth = 0 if 0 == tan else width / tan
-    extraDepth = extraDepth
-    depth = toolDepth + extraDepth
-    toolOffset = tool.FlatRadius
-    extraOffset = tool.Diameter/2 - width if 180 == angle else extraDepth / tan
+    tan = math.tan(math.radians(angle/2))
+    toolDepth = 0 if (0 == angle or 180 == angle) else width / tan  
+    extraDepth = extraDepth 
+    toolOffset = tool.Diameter
+
+    if angle <= 180: #side, chamfer, bottom
+        depth = toolDepth + extraDepth
+        extraOffset = width - tool.Diameter/2 if 0 == toolDepth else extraDepth / tan    
+    else: #dovetail
+        depth =  -toolDepth + extraDepth
+        extraOffset = - width - extraDepth / -tan
+            
     offset = toolOffset + extraOffset
     return (depth, offset)
 
